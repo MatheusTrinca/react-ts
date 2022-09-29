@@ -1,8 +1,10 @@
 import { useCallback, useState } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 
 interface IListData {
+  id: string;
   title: string;
-  isSelected: boolean;
+  isCompleted: boolean;
 }
 
 const Dashboard = () => {
@@ -18,7 +20,10 @@ const Dashboard = () => {
         setLista(oldLista => {
           if (oldLista.some(listItem => listItem.title === value))
             return oldLista;
-          return [...oldLista, { title: value, isSelected: false }];
+          return [
+            ...oldLista,
+            { id: uuidv4(), title: value, isCompleted: false },
+          ];
         });
       }
     }, []);
@@ -27,7 +32,9 @@ const Dashboard = () => {
     <>
       <p>Lista</p>
 
-      <p>{lista.filter(listItem => listItem.isSelected).length} selecionados</p>
+      <p>
+        {lista.filter(listItem => listItem.isCompleted).length} selecionados
+      </p>
 
       <input type="text" onKeyDown={handleInputKeyDown} />
 
@@ -36,12 +43,12 @@ const Dashboard = () => {
           <li key={item.title}>
             <input
               type="checkbox"
-              checked={item.isSelected}
+              checked={item.isCompleted}
               onChange={() => {
                 setLista(oldState =>
                   oldState.map(oldItem =>
                     oldItem.title === item.title
-                      ? { ...oldItem, isSelected: !oldItem.isSelected }
+                      ? { ...oldItem, isCompleted: !oldItem.isCompleted }
                       : oldItem
                   )
                 );

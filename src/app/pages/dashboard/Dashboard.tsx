@@ -1,32 +1,78 @@
-import { useCallback, useState } from 'react';
-import { v4 as uuidv4 } from 'uuid';
-
-interface IListData {
-  id: string;
-  title: string;
-  isCompleted: boolean;
-}
+import { useCallback, useEffect, useState } from 'react';
+import { ApiException } from '../../shared/services/api/ApiException';
+import {
+  getAll,
+  create,
+  ITarefa,
+  updateById,
+  deleteById,
+} from '../../shared/services/api/tarefas/TarefasService';
+import { ButtonLogin } from './components/ButtonLogin';
 
 const Dashboard = () => {
-  const [lista, setLista] = useState<IListData[]>([]);
+  const [lista, setLista] = useState<ITarefa[]>([]);
+
+  useEffect(() => {
+    getAll().then(result => {
+      if (result instanceof ApiException) {
+        alert(result);
+      } else {
+        setLista(result);
+      }
+    });
+  }, []);
 
   const handleInputKeyDown: React.KeyboardEventHandler<HTMLInputElement> =
-    useCallback(e => {
-      if (e.key === 'Enter') {
-        if (e.currentTarget.value.trim().length === 0) return;
+    useCallback(
+      e => {
+        if (e.key === 'Enter') {
+          if (e.currentTarget.value.trim().length === 0) return;
 
-        let value = e.currentTarget.value;
+          let value = e.currentTarget.value;
 
-        setLista(oldLista => {
-          if (oldLista.some(listItem => listItem.title === value))
-            return oldLista;
-          return [
-            ...oldLista,
-            { id: uuidv4(), title: value, isCompleted: false },
-          ];
-        });
+          if (lista.some(listItem => listItem.title === value)) {
+            alert('Tarefa já existente');
+            return;
+          }
+
+          create({ title: value, isCompleted: false }).then(result => {
+            if (result instanceof ApiException) {
+              alert(result);
+            } else {
+              setLista(oldLista => [...oldLista, result]);
+            }
+          });
+        }
+      },
+      [lista]
+    );
+
+  const onChangeHandler = useCallback((tarefa: ITarefa) => {
+    const updatedTarefa = { ...tarefa, isCompleted: !tarefa.isCompleted };
+    updateById(tarefa.id, updatedTarefa).then(result => {
+      if (result instanceof ApiException) {
+        alert(result);
+      } else {
+        setLista(oldLista =>
+          oldLista.map(item =>
+            item.id === tarefa.id
+              ? { ...item, isCompleted: !item.isCompleted }
+              : item
+          )
+        );
       }
-    }, []);
+    });
+  }, []);
+
+  const handleDelete = useCallback((id: string) => {
+    deleteById(id).then(result => {
+      if (result instanceof ApiException) {
+        alert(result);
+      } else {
+        setLista(oldLista => oldLista.filter(item => item.id !== id));
+      }
+    });
+  }, []);
 
   return (
     <>
@@ -44,17 +90,14 @@ const Dashboard = () => {
             <input
               type="checkbox"
               checked={item.isCompleted}
-              onChange={() => {
-                setLista(oldState =>
-                  oldState.map(oldItem =>
-                    oldItem.title === item.title
-                      ? { ...oldItem, isCompleted: !oldItem.isCompleted }
-                      : oldItem
-                  )
-                );
-              }}
+              onChange={() => onChangeHandler(item)}
             />
-            {item.title}
+            <p style={{ marginRight: '10px', display: 'inline-block' }}>
+              {item.title}
+            </p>
+            <ButtonLogin type="button" onClick={() => handleDelete(item.id)}>
+              Delete
+            </ButtonLogin>
           </li>
         ))}
       </ul>

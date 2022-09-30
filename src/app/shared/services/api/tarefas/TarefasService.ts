@@ -1,7 +1,7 @@
 import { Api } from '../ApiConfig';
 import { ApiException } from '../ApiException';
 
-interface ITarefa {
+export interface ITarefa {
   id: string;
   title: string;
   isCompleted: boolean;
@@ -31,7 +31,7 @@ export const create = async (
   dataToCreate: Omit<ITarefa, 'id'>
 ): Promise<ITarefa | ApiException> => {
   try {
-    const { data } = await api.post('/tarefa', dataToCreate);
+    const { data } = await api.post('/tarefas', dataToCreate);
     return data;
   } catch (error: any) {
     return new ApiException(error.message || 'Erro ao conectar api');
@@ -40,7 +40,7 @@ export const create = async (
 
 export const updateById = async (id: string, dataToUpdate: ITarefa) => {
   try {
-    const { data } = await api.put(`/tarefa/${id}`, dataToUpdate);
+    const { data } = await api.put(`/tarefas/${id}`, dataToUpdate);
     return data;
   } catch (error: any) {
     return new ApiException(error.message || 'Erro ao conectar api');
